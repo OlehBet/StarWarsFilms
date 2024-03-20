@@ -41,3 +41,5 @@ def print_film_info(film_id):
             species_data = get_swapi_data(species_url)
             if species_data:
                 print(f"  {species_data['name']}")
+    else:
+        print("Фільм не знайдено.")
