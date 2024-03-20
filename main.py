@@ -36,3 +36,8 @@ def print_film_info(film_id):
             starship_data = get_swapi_data(starship_url)
             if starship_data:
                 print(f"  {starship_data['name']}")
+        print("Види істот:")
+        for species_url in film_data['species']:
+            species_data = get_swapi_data(species_url)
+            if species_data:
+                print(f"  {species_data['name']}")
