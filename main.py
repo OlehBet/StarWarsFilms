@@ -15,3 +15,7 @@ def get_planet_name(planet_url):
         return planet_data['name']
     else:
         return None
+
+
+def print_film_info(film_id):
+    film_data = get_swapi_data(f"https://swapi.dev/api/films/{film_id}/")
