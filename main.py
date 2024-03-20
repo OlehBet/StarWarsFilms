@@ -19,3 +19,10 @@ def get_planet_name(planet_url):
 
 def print_film_info(film_id):
     film_data = get_swapi_data(f"https://swapi.dev/api/films/{film_id}/")
+    if film_data:
+        print("Фільм:", film_data['title'])
+        print("Персонажж:")
+        for character_url in film_data['characters']:
+            character_data = get_swapi_data(character_url)
+            if character_data:
+                print(f"  {character_data['name']} з планкти {get_planet_name(character_data['homeworld'])}")
