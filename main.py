@@ -7,3 +7,11 @@ def get_swapi_data(url):
         return response.json()
     else:
         return None
+
+
+def get_planet_name(planet_url):
+    planet_data = get_swapi_data(planet_url)
+    if planet_data:
+        return planet_data['name']
+    else:
+        return None
