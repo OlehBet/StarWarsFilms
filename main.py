@@ -43,3 +43,8 @@ def print_film_info(film_id):
                 print(f"  {species_data['name']}")
     else:
         print("Фільм не знайдено.")
+
+
+if __name__ == "__main__":
+    film_id = input("Введіть іідентифікеаторр фільму: ")
+    print_film_info(film_id)
