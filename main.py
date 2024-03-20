@@ -31,3 +31,8 @@ def print_film_info(film_id):
             vehicle_data = get_swapi_data(vehicle_url)
             if vehicle_data:
                 print(f"  {vehicle_data['name']}")
+        print("Косчмічні корабли:")
+        for starship_url in film_data['starships']:
+            starship_data = get_swapi_data(starship_url)
+            if starship_data:
+                print(f"  {starship_data['name']}")
