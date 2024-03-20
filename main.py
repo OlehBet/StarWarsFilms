@@ -21,17 +21,17 @@ def print_film_info(film_id):
     film_data = get_swapi_data(f"https://swapi.dev/api/films/{film_id}/")
     if film_data:
         print("Фільм:", film_data['title'])
-        print("Персонажж:")
+        print("Персонажі:")
         for character_url in film_data['characters']:
             character_data = get_swapi_data(character_url)
             if character_data:
-                print(f"  {character_data['name']} з планкти {get_planet_name(character_data['homeworld'])}")
-        print("Танспортнв засоби:")
+                print(f"  {character_data['name']} з планети {get_planet_name(character_data['homeworld'])}")
+        print("Транспорті засоби:")
         for vehicle_url in film_data['vehicles']:
             vehicle_data = get_swapi_data(vehicle_url)
             if vehicle_data:
                 print(f"  {vehicle_data['name']}")
-        print("Косчмічні корабли:")
+        print("Космічні кораблі:")
         for starship_url in film_data['starships']:
             starship_data = get_swapi_data(starship_url)
             if starship_data:
@@ -46,5 +46,5 @@ def print_film_info(film_id):
 
 
 if __name__ == "__main__":
-    film_id = input("Введіть іідентифікеаторр фільму: ")
+    film_id = input("Введіть індентефікатор фільму: ")
     print_film_info(film_id)
