@@ -46,5 +46,5 @@ def print_film_info(film_id):
 
 
 if __name__ == "__main__":
-    film_id = input("Введіть індентефікатор фільму: ")
+    film_id = input("Введіть ідентефікатор фільму: ")
     print_film_info(film_id)
