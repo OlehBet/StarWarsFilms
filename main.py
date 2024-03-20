@@ -26,3 +26,8 @@ def print_film_info(film_id):
             character_data = get_swapi_data(character_url)
             if character_data:
                 print(f"  {character_data['name']} з планкти {get_planet_name(character_data['homeworld'])}")
+        print("Танспортнв засоби:")
+        for vehicle_url in film_data['vehicles']:
+            vehicle_data = get_swapi_data(vehicle_url)
+            if vehicle_data:
+                print(f"  {vehicle_data['name']}")
