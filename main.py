@@ -1,50 +1,59 @@
+import pandas as pd
 import requests
+import logging
 
+# Налаштування логера
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-def get_swapi_data(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return None
+class SWAPIClient:
+    def __init__(self, base_url: str):
+        self.base_url = base_url
 
+    def fetch_json(self, endpoint: str) -> list:
+        all_data = []
+        url = f"{self.base_url}{endpoint}"
 
-def get_planet_name(planet_url):
-    planet_data = get_swapi_data(planet_url)
-    if planet_data:
-        return planet_data['name']
-    else:
-        return None
+        while url:
+            logger.info(f"Отримання даних з: {url}")
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            all_data.extend(data['results'])
+            url = data.get('next')
 
+        return all_data
 
-def print_film_info(film_id):
-    film_data = get_swapi_data(f"https://swapi.dev/api/films/{film_id}/")
-    if film_data:
-        print("Фільм:", film_data['title'])
-        print("Персонажі:")
-        for character_url in film_data['characters']:
-            character_data = get_swapi_data(character_url)
-            if character_data:
-                print(f"  {character_data['name']} з планети {get_planet_name(character_data['homeworld'])}")
-        print("Транспорті засоби:")
-        for vehicle_url in film_data['vehicles']:
-            vehicle_data = get_swapi_data(vehicle_url)
-            if vehicle_data:
-                print(f"  {vehicle_data['name']}")
-        print("Космічні кораблі:")
-        for starship_url in film_data['starships']:
-            starship_data = get_swapi_data(starship_url)
-            if starship_data:
-                print(f"  {starship_data['name']}")
-        print("Види істот:")
-        for species_url in film_data['species']:
-            species_data = get_swapi_data(species_url)
-            if species_data:
-                print(f"  {species_data['name']}")
-    else:
-        print("Фільм не знайдено.")
+class SWAPIDataManager:
+    def __init__(self, client: SWAPIClient):
+        self.client = client
+        self.data = {}
 
+    def fetch_entity(self, endpoint: str):
+        logger.info(f"Завантаження даних для endpoint: {endpoint}")
+        self.data[endpoint] = pd.DataFrame(self.client.fetch_json(endpoint))
 
-if __name__ == "__main__":
-    film_id = input("Введіть ідентефікатор фільму: ")
-    print_film_info(film_id)
+    def apply_filter(self, endpoint: str, columns_to_drop: list):
+        if endpoint in self.data:
+            logger.info(f"Видалення стовпців {columns_to_drop} з endpoint: {endpoint}")
+            self.data[endpoint].drop(columns=columns_to_drop, inplace=True)
+        else:
+            logger.warning(f"Дані для endpoint {endpoint} не знайдено.")
+
+    def save_to_excel(self, filename: str):
+        logger.info(f"Запис даних у Excel файл: {filename}")
+        with pd.ExcelWriter(filename) as writer:
+            for endpoint, dataframe in self.data.items():
+                sheet_name = endpoint.rstrip('/')
+                dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
+        logger.info("Дані успішно записано у Excel.")
+
+client = SWAPIClient(base_url="https://swapi.dev/api/")
+manager = SWAPIDataManager(client)
+
+manager.fetch_entity("people")
+manager.fetch_entity("planets")
+
+manager.apply_filter("people", ["films", "species"])
+
+manager.save_to_excel("swapi_data.xlsx")
