@@ -2,9 +2,9 @@ import pandas as pd
 import requests
 import logging
 
-# Налаштування логера
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class SWAPIClient:
     def __init__(self, base_url: str):
@@ -24,6 +24,7 @@ class SWAPIClient:
 
         return all_data
 
+
 class SWAPIDataManager:
     def __init__(self, client: SWAPIClient):
         self.client = client
@@ -40,20 +41,25 @@ class SWAPIDataManager:
         else:
             logger.warning(f"Дані для endpoint {endpoint} не знайдено.")
 
-    def save_to_excel(self, filename: str):
+
+class ExcelSaver:
+    def save_to_excel(self, data: dict, filename: str):
         logger.info(f"Запис даних у Excel файл: {filename}")
         with pd.ExcelWriter(filename) as writer:
-            for endpoint, dataframe in self.data.items():
+            for endpoint, dataframe in data.items():
                 sheet_name = endpoint.rstrip('/')
                 dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
         logger.info("Дані успішно записано у Excel.")
 
-client = SWAPIClient(base_url="https://swapi.dev/api/")
-manager = SWAPIDataManager(client)
 
-manager.fetch_entity("people")
-manager.fetch_entity("planets")
+if __name__ == "__main__":
+    client = SWAPIClient(base_url="https://swapi.dev/api/")
+    manager = SWAPIDataManager(client)
 
-manager.apply_filter("people", ["films", "species"])
+    manager.fetch_entity("people")
+    manager.fetch_entity("planets")
 
-manager.save_to_excel("swapi_data.xlsx")
+    manager.apply_filter("people", ["films", "species"])
+
+    excel_saver = ExcelSaver()
+    excel_saver.save_to_excel(manager.data, "swapi_data.xlsx")
