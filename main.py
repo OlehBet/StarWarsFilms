@@ -63,4 +63,3 @@ if __name__ == "__main__":
 
     excel_saver = ExcelSaver()
     excel_saver.save_to_excel(manager.data, "swapi_data.xlsx")
-
