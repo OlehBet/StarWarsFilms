@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import logging
+import argparse
 from abc import ABC, abstractmethod
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -23,10 +24,21 @@ class SWAPIClient:
 
         return all_data
 
+
+class ExcelSWAPIClient:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+    def fetch_json(self, endpoint: str) -> list:
+        df = pd.read_excel(self.file_path, sheet_name=endpoint)
+        return df.to_dict(orient='records')
+
+
 class EntityProcessor(ABC):
     @abstractmethod
     def process(self, json_data: list) -> pd.DataFrame:
         pass
+
 
 class PeopleProcessor(EntityProcessor):
     def process(self, json_data: list) -> pd.DataFrame:
@@ -34,14 +46,16 @@ class PeopleProcessor(EntityProcessor):
         df['full_name'] = df['name']
         return df
 
+
 class PlanetsProcessor(EntityProcessor):
     def process(self, json_data: list) -> pd.DataFrame:
         df = pd.DataFrame(json_data)
         df['population'] = pd.to_numeric(df['population'], errors='coerce')
         return df
 
+
 class SWAPIDataManager:
-    def __init__(self, client: SWAPIClient):
+    def __init__(self, client):
         self.client = client
         self.data = {}
         self.processors = {}
@@ -66,14 +80,32 @@ class SWAPIDataManager:
                 dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
         logger.info("Дані успішно записано у Excel.")
 
-if __name__ == "__main__":
-    client = SWAPIClient(base_url="https://swapi.dev/api/")
+
+def main():
+    parser = argparse.ArgumentParser(description="SWAPI Data Manager")
+    parser.add_argument('--input', required=True, help="URL або шлях до .xlsx файлу")
+    parser.add_argument('--endpoint', required=True, help="Кома розділені імена endpoint-ів (наприклад, 'people,planets')")
+    parser.add_argument('--output', required=True, help="Шлях до файлу для збереження результатів")
+
+    args = parser.parse_args()
+
+    if args.input.startswith('http'):
+        client = SWAPIClient(base_url=args.input)
+    else:
+        client = ExcelSWAPIClient(file_path=args.input)
+
     manager = SWAPIDataManager(client)
 
+    endpoints = args.endpoint.split(',')
     manager.register_processor("people", PeopleProcessor())
     manager.register_processor("planets", PlanetsProcessor())
 
-    manager.fetch_entity("people")
-    manager.fetch_entity("planets")
+    for endpoint in endpoints:
+        manager.fetch_entity(endpoint)
 
-    manager.save_to_excel("swapi_data.xlsx")
+    manager.save_to_excel(args.output)
+
+
+if __name__ == "__main__":
+    main()
+
