@@ -7,9 +7,10 @@ from abc import ABC, abstractmethod
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 class SWAPIClient:
-    def __init__(self, base_url: str):
-        self.base_url = base_url
+    def __init__(self, path: str):
+        self.base_url = path
 
     def fetch_json(self, endpoint: str) -> list:
         all_data = []
@@ -25,13 +26,17 @@ class SWAPIClient:
         return all_data
 
 
-class ExcelSWAPIClient:
-    def __init__(self, file_path: str):
-        self.file_path = file_path
+class ExcelSWAPIClient(SWAPIClient):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self.data = pd.read_excel(path, sheet_name=None)
 
     def fetch_json(self, endpoint: str) -> list:
-        df = pd.read_excel(self.file_path, sheet_name=endpoint)
-        return df.to_dict(orient='records')
+        if endpoint not in self.data:
+            logger.warning(f"Endpoint {endpoint} not found in {self.path}")
+            return []
+
+        return self.data[endpoint].to_dict(orient='records')
 
 
 class EntityProcessor(ABC):
@@ -84,15 +89,16 @@ class SWAPIDataManager:
 def main():
     parser = argparse.ArgumentParser(description="SWAPI Data Manager")
     parser.add_argument('--input', required=True, help="URL або шлях до .xlsx файлу")
-    parser.add_argument('--endpoint', required=True, help="Кома розділені імена endpoint-ів (наприклад, 'people,planets')")
+    parser.add_argument('--endpoint', required=True,
+                        help="Кома розділені імена endpoint-ів (наприклад, 'people,planets')")
     parser.add_argument('--output', required=True, help="Шлях до файлу для збереження результатів")
 
     args = parser.parse_args()
 
     if args.input.startswith('http'):
-        client = SWAPIClient(base_url=args.input)
+        client = SWAPIClient(path=args.input)
     else:
-        client = ExcelSWAPIClient(file_path=args.input)
+        client = ExcelSWAPIClient(path=args.input)
 
     manager = SWAPIDataManager(client)
 
@@ -108,4 +114,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
