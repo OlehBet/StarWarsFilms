@@ -1,89 +1,41 @@
-import pandas as pd
-import requests
-import logging
 import argparse
-from abc import ABC, abstractmethod
+import pandas as pd
+from interfaces import DataFetcher, DataProcessor, DataSaver
+from clients import SWAPIClient, ExcelSWAPIClient
+from processors import PeopleProcessor, PlanetsProcessor
+import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-class SWAPIClient:
-    def __init__(self, path: str):
-        self.base_url = path
-
-    def fetch_json(self, endpoint: str) -> list:
-        all_data = []
-        url = f"{self.base_url}{endpoint}"
-
-        while url:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
-            all_data.extend(data['results'])
-            url = data.get('next')
-
-        return all_data
-
-
-class ExcelSWAPIClient(SWAPIClient):
-    def __init__(self, path: str):
-        super().__init__(path)
-        self.data = pd.read_excel(path, sheet_name=None)
-
-    def fetch_json(self, endpoint: str) -> list:
-        if endpoint not in self.data:
-            logger.warning(f"Endpoint {endpoint} not found in {self.path}")
-            return []
-
-        return self.data[endpoint].to_dict(orient='records')
-
-
-class EntityProcessor(ABC):
-    @abstractmethod
-    def process(self, json_data: list) -> pd.DataFrame:
-        pass
-
-
-class PeopleProcessor(EntityProcessor):
-    def process(self, json_data: list) -> pd.DataFrame:
-        df = pd.DataFrame(json_data)
-        df['full_name'] = df['name']
-        return df
-
-
-class PlanetsProcessor(EntityProcessor):
-    def process(self, json_data: list) -> pd.DataFrame:
-        df = pd.DataFrame(json_data)
-        df['population'] = pd.to_numeric(df['population'], errors='coerce')
-        return df
-
-
-class SWAPIDataManager:
-    def __init__(self, client):
+class SWAPIDataManager(DataFetcher, DataProcessor, DataSaver):
+    def __init__(self, client: DataFetcher):
         self.client = client
         self.data = {}
         self.processors = {}
 
-    def register_processor(self, endpoint: str, processor: EntityProcessor):
-        self.processors[endpoint] = processor
-
     def fetch_entity(self, endpoint: str):
-        logger.info(f"Завантаження даних для endpoint: {endpoint}")
-        raw_data = self.client.fetch_json(endpoint)
-        if endpoint in self.processors:
-            processor = self.processors[endpoint]
-            self.data[endpoint] = processor.process(raw_data)
+        raw_data = self.client.fetch_entity(endpoint)
+        self.data[endpoint] = pd.DataFrame(raw_data)
+        logger.info(f"Отримано {len(raw_data)} записів для {endpoint}")
+
+    def register_processor(self, entity: str, processor: DataProcessor):
+        self.processors[entity] = processor
+
+    def apply_filter(self, endpoint: str, columns_to_drop: list):
+        if endpoint in self.data:
+            self.data[endpoint] = self.data[endpoint].drop(columns=columns_to_drop, errors='ignore')
+            logger.info(f"Застосовано фільтр для {endpoint}, видалено стовпці: {columns_to_drop}")
         else:
-            logger.warning(f"Обробник для {endpoint} не знайдений.")
+            logger.warning(f"Дані для {endpoint} не знайдено.")
 
     def save_to_excel(self, filename: str):
-        logger.info(f"Запис даних у Excel файл: {filename}")
         with pd.ExcelWriter(filename) as writer:
-            for endpoint, dataframe in self.data.items():
-                sheet_name = endpoint.rstrip('/')
-                dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
-        logger.info("Дані успішно записано у Excel.")
+            for endpoint, df in self.data.items():
+                df.to_excel(writer, sheet_name=endpoint, index=False)
+                logger.info(f"Збережено дані {endpoint} в таблицю.")
+        logger.info(f"Дані успішно збережено в {filename}.")
 
 
 def main():
@@ -102,14 +54,16 @@ def main():
 
     manager = SWAPIDataManager(client)
 
-    endpoints = args.endpoint.split(',')
     manager.register_processor("people", PeopleProcessor())
     manager.register_processor("planets", PlanetsProcessor())
 
+    endpoints = args.endpoint.split(',')
     for endpoint in endpoints:
         manager.fetch_entity(endpoint)
 
     manager.save_to_excel(args.output)
+
+    logger.info("Процес завершено.")
 
 
 if __name__ == "__main__":
