@@ -4,21 +4,21 @@ import logging
 import pandas as pd
 
 from functions.clients import SWAPIClient, ExcelSWAPIClient
-from functions.interfaces import DataFetcher, DataProcessor, DataSaver, DataProviderInterface
+from functions.interfaces import DataProcessor, DataSaver, DataProviderInterface
 from functions.processors import PeopleProcessor, PlanetsProcessor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-class SWAPIDataManager(DataFetcher, DataProcessor, DataSaver):
+class SWAPIDataManager(DataProcessor, DataSaver):
     def __init__(self, client: DataProviderInterface):
-        self.client = client  # Тепер це абстракція через інтерфейс DataProviderInterface
+        self.client = client
         self.data = {}
         self.processors = {}
 
     def fetch_entity(self, endpoint: str):
-        raw_data = self.client.fetch_data(endpoint)  # Використовуємо fetch_data
+        raw_data = self.client.fetch_data(endpoint)
         self.data[endpoint] = pd.DataFrame(raw_data)
         logger.info(f"Отримано {len(raw_data)} записів для {endpoint}")
 
@@ -49,7 +49,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Визначаємо тип джерела даних
     if args.input.startswith('http'):
         client = SWAPIClient(path=args.input)
     else:

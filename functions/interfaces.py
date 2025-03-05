@@ -7,10 +7,10 @@ class DataProviderInterface(ABC):
         pass
 
 
-class DataFetcher(ABC):
-    @abstractmethod
-    def fetch_entity(self, endpoint: str):
-        pass
+# class DataFetcher(ABC):
+#     @abstractmethod
+#     def fetch_entity(self, endpoint: str):
+#         pass
 
 
 class DataProcessor(ABC):
