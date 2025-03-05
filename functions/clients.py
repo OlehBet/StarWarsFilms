@@ -3,12 +3,12 @@ import logging
 import pandas as pd
 import requests
 
-from functions.interfaces import DataProviderInterface
+from functions.interfaces import DataProvider
 
 logger = logging.getLogger(__name__)
 
 
-class SWAPIClient(DataProviderInterface):
+class SWAPIClient(DataProvider):
     def __init__(self, path: str):
         self.base_url = path
 
@@ -26,7 +26,7 @@ class SWAPIClient(DataProviderInterface):
         return all_data
 
 
-class ExcelSWAPIClient(DataProviderInterface):
+class ExcelSWAPIClient(DataProvider):
     def __init__(self, path: str):
         self.path = path
         self.data = pd.read_excel(path, sheet_name=None)

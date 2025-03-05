@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class DataProviderInterface(ABC):
+class DataProvider(ABC):
     @abstractmethod
     def fetch_data(self, endpoint: str):
         pass

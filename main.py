@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 
 from functions.clients import SWAPIClient, ExcelSWAPIClient
-from functions.interfaces import DataProcessor, DataSaver, DataProviderInterface
+from functions.interfaces import DataProcessor, DataSaver, DataProvider
 from functions.processors import PeopleProcessor, PlanetsProcessor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class SWAPIDataManager(DataProcessor, DataSaver):
-    def __init__(self, client: DataProviderInterface):
+    def __init__(self, client: DataProvider):
         self.client = client
         self.data = {}
         self.processors = {}
