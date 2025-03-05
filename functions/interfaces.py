@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 
 
+class DataProviderInterface(ABC):
+    @abstractmethod
+    def fetch_data(self, endpoint: str):
+        pass
+
+
 class DataFetcher(ABC):
     @abstractmethod
     def fetch_entity(self, endpoint: str):

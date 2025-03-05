@@ -1,5 +1,6 @@
 import pandas as pd
-from interfaces import DataProcessor
+
+from functions.interfaces import DataProcessor
 
 
 class EntityProcessor(DataProcessor):
